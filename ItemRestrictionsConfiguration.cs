@@ -8,6 +8,8 @@ namespace LeeIzaZombie.ItemRestrictions
     {
         [XmlArrayItem(ElementName = "Item")]
         public List<ushort> Items;
+        [XmlArrayItem(ElementName = "Group")]
+        public List<UnrestrictGroup> UnrestrictGroups;
 
         public bool ignoreAdmin;
         public float CheckInterval = 1.0F;
@@ -20,6 +22,21 @@ namespace LeeIzaZombie.ItemRestrictions
                 519,
                 1050
             };
+            this.UnrestrictGroups = new List<UnrestrictGroup>()
+            {
+                new UnrestrictGroup { Items = new List<ushort>() {69, 420}, permission = "restriction.group.dank" },
+                new UnrestrictGroup { Items = new List<ushort>() {1, 2}, permission = "restriction.group.notVIP" }
+            };
         }
+    }
+    public class UnrestrictGroup
+    {
+        public UnrestrictGroup()
+        {
+        }
+
+        [XmlArrayItem(ElementName = "Item")]
+        public List<ushort> Items;
+        public string permission;
     }
 }

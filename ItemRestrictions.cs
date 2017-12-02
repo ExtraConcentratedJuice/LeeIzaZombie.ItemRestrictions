@@ -16,7 +16,7 @@ namespace LeeIzaZombie.ItemRestrictions
     public class ItemRestrictions : RocketPlugin<ItemRestrictionsConfiguration>
     {
         public static ItemRestrictions Instance;
-        public string version = "2.0";
+        public string version = "3.0";
 
         public override TranslationList DefaultTranslations
         {
@@ -33,36 +33,56 @@ namespace LeeIzaZombie.ItemRestrictions
         protected override void Load()
         {
             Instance = this;
-
-            Logger.LogWarning("Setting up Item Restrictions by LeeIzaZombie. v" + version);
+            Logger.LogWarning("Setting up Item Restrictions by LeeIzaZombie, improved by Extra. v" + version);
             Logger.LogWarning("--");
             int count = 0; foreach (ushort item in this.Configuration.Instance.Items) { count++; }
+            int group_count = 0; foreach (UnrestrictGroup g in this.Configuration.Instance.UnrestrictGroups) { group_count++; }
             Logger.LogWarning("Black listed items found: " + count);
+            Logger.LogWarning("Groups found: " + group_count);
             Logger.LogWarning("--");
             Logger.LogWarning("Item Restrictions is ready!");
         }
 
         private void CheckInventory(UnturnedPlayer player)
         {
+            bool willRestrict;
             for(int i = 0; i < this.Configuration.Instance.Items.Count; i++)
             {
+                willRestrict = true;
                 ushort item = this.Configuration.Instance.Items[i];
-                try
+                foreach (UnrestrictGroup group in this.Configuration.Instance.UnrestrictGroups)
                 {
-                    for (byte page = 0; page < PlayerInventory.PAGES; page++)
+                    if (player.HasPermission(group.permission) && willRestrict)
                     {
-                        byte itemCount = player.Player.inventory.getItemCount(page);
-                        for (byte index = 0; index < itemCount; index++)
+                        foreach (ushort id in group.Items)
                         {
-                            if (player.Player.inventory.getItem(page, index).item.id == item)
+                            if (item == id)
                             {
-                                UnturnedChat.Say(player, Translate("item_notPermitted", UnturnedItems.GetItemAssetById(item).itemName), Color.red);
-                                player.Player.inventory.removeItem(page, index);
+                                willRestrict = false;
+                                break;
                             }
                         }
                     }
                 }
-                catch { }
+                if (willRestrict)
+                {
+                    try
+                    {
+                        for (byte page = 0; page < PlayerInventory.PAGES; page++)
+                        {
+                            byte itemCount = player.Player.inventory.getItemCount(page);
+                            for (byte index = 0; index < itemCount; index++)
+                            {
+                                if (player.Player.inventory.getItem(page, index).item.id == item)
+                                {
+                                    UnturnedChat.Say(player, Translate("item_notPermitted", UnturnedItems.GetItemAssetById(item).itemName), Color.red);
+                                    player.Player.inventory.removeItem(page, index);
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                }
             }
         }
 
@@ -80,7 +100,6 @@ namespace LeeIzaZombie.ItemRestrictions
                 UnturnedPlayer p = UnturnedPlayer.FromSteamPlayer(sp);
                 list.Add(p);
             }
-
             return list;
         }
 
@@ -106,7 +125,6 @@ namespace LeeIzaZombie.ItemRestrictions
                             CheckInventory(player);
                     }
                 }
-
                 Second = DateTime.Now;
             }
         }
